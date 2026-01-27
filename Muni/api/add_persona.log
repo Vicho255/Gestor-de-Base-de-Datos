@@ -1,0 +1,22 @@
+[2026-01-26 16:06:38] Inicio
+[2026-01-26 16:06:38] Método: POST
+[2026-01-26 16:06:38] Input crudo: {"RUT":"2168617-4","nombre":"Vicente Sebastian","apellido":"Inostroza Pradines","fecha_nac":"2004-10-10","telefono":"+56947733803","correo":"pokemonarkbkn@gmail.com"}
+[2026-01-26 16:06:38] JSON decode resultado: {"RUT":"2168617-4","nombre":"Vicente Sebastian","apellido":"Inostroza Pradines","fecha_nac":"2004-10-10","telefono":"+56947733803","correo":"pokemonarkbkn@gmail.com"}
+[2026-01-26 16:06:38] JSON error: No error
+[2026-01-26 16:06:38] Input final: {"RUT":"2168617-4","nombre":"Vicente Sebastian","apellido":"Inostroza Pradines","fecha_nac":"2004-10-10","telefono":"+56947733803","correo":"pokemonarkbkn@gmail.com"}
+[2026-01-26 16:06:38] Validando campos...
+[2026-01-26 16:06:38] Datos procesados:
+RUT: 2168617-4
+Nombre: Vicente Sebastian
+Apellido: Inostroza Pradines
+Fecha Nac: 2004-10-10
+Teléfono: +56947733803
+Correo: pokemonarkbkn@gmail.com
+[2026-01-26 16:06:38] Conexión BD OK
+[2026-01-26 16:06:38] Transacción iniciada
+[2026-01-26 16:06:38] Verificación RUT: 0 encontrados
+[2026-01-26 16:06:38] Insert Personas: OK
+[2026-01-26 16:06:38] PDOException: SQLSTATE[42501]: Insufficient privilege: 7 ERROR:  permiso denegado a la secuencia telefono_id_seq
+[2026-01-26 16:06:38] Rollback ejecutado
+[2026-01-26 16:06:38] Fin del proceso
+
