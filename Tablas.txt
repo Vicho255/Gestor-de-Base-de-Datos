@@ -1,0 +1,90 @@
+CREATE TABLE Usuarios (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    Rol VARCHAR(20) CHECK (Rol IN ('admin','user')) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Personas (
+    RUT VARCHAR(12) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    fecha_nac DATE DEFAULT NULL
+);
+
+CREATE TABLE Direccion (
+    id SERIAL PRIMARY KEY,
+    ciudad VARCHAR(100),
+    comuna VARCHAR(100) DEFAULT 'Rio Bueno',
+    calle VARCHAR(150),
+    numero VARCHAR(10)
+);
+
+CREATE TABLE Direccion_Persona (
+    persona_rut VARCHAR(12) REFERENCES Personas(RUT) ON UPDATE CASCADE ON DELETE CASCADE,
+    direccion_id INT REFERENCES Direccion(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    PRIMARY KEY (persona_rut, direccion_id)
+);
+
+CREATE TABLE Telefono (
+    id SERIAL PRIMARY KEY,
+    numero VARCHAR(15) NOT NULL,
+    persona_rut VARCHAR(12) REFERENCES Personas(RUT) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE Correo (
+    id SERIAL PRIMARY KEY,
+    cuerpo VARCHAR(100) NOT NULL,
+    dominio VARCHAR(50) NOT NULL,
+    persona_rut VARCHAR(12) REFERENCES Personas(RUT) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE Categoria (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT
+);
+
+CREATE TABLE Emprendimiento (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    categoria_id INT REFERENCES Categoria(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    duenno_rut VARCHAR(12) REFERENCES Personas(RUT) ON UPDATE CASCADE ON DELETE CASCADE,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE Empresa (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    categoria_id INT REFERENCES Categoria(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    duenno_rut VARCHAR(12) REFERENCES Personas(RUT) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Registro_de_Cambios (
+    id SERIAL PRIMARY KEY,
+    tabla_afectada VARCHAR(50) NOT NULL,
+    operacion VARCHAR(10) NOT NULL,
+    id_registro VARCHAR(50),
+    usuario VARCHAR(100),
+    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    datos_anteriores JSONB,
+    datos_nuevos JSONB,
+    descripcion TEXT NOT NULL
+);
+
+
+CREATE TABLE Beneficios (
+    id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion TEXT
+);
+
+CREATE TABLE Beneficios_Persona (
+    Persona_rut VARCHAR(12) REFERENCES Personas(RUT) ON UPDATE CASCADE ON DELETE CASCADE,
+    Beneficio_id INT REFERENCES Beneficios(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    fecha_post DATE,
+    PRIMARY KEY (Persona_rut, Beneficio_id)
+);

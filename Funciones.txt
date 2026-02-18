@@ -1,0 +1,192 @@
+CREATE OR REPLACE FUNCTION validar_datos(p_username VARCHAR)
+RETURNS TABLE(id INT,username varchar, password VARCHAR) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id, u.username,u.password
+    FROM usuarios u 
+    WHERE u.username = p_username;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_personas(p_rut VARCHAR DEFAULT NULL)
+RETURNS TABLE (
+    rut VARCHAR,
+    nombre VARCHAR,
+    apellido VARCHAR,
+    edad INT,
+    telefono VARCHAR,
+    correo VARCHAR,
+    ciudad VARCHAR,
+    comuna VARCHAR,
+    calle VARCHAR,
+    numero_direccion VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.rut,
+        p.nombre,
+        p.apellido,
+        DATE_PART('year', AGE(p.fecha_nac))::INT AS edad,
+        COALESCE(t.numero, 'Sin teléfono')::VARCHAR AS telefono,
+        COALESCE(c.cuerpo || '@' || c.dominio, 'Sin correo')::VARCHAR AS correo,
+        COALESCE(addr.ciudad, '')::VARCHAR AS ciudad,
+        COALESCE(addr.comuna, '')::VARCHAR AS comuna,
+        COALESCE(addr.calle, '')::VARCHAR AS calle,
+        COALESCE(addr.numero, '')::VARCHAR AS numero_direccion
+    FROM Personas p
+    LEFT JOIN (
+        SELECT DISTINCT ON (persona_rut) persona_rut, numero
+        FROM Telefono
+        ORDER BY persona_rut, id
+    ) t ON p.rut = t.persona_rut
+    LEFT JOIN (
+        SELECT DISTINCT ON (persona_rut) persona_rut, cuerpo, dominio
+        FROM Correo
+        ORDER BY persona_rut, id
+    ) c ON p.rut = c.persona_rut
+    LEFT JOIN LATERAL (
+        SELECT d.ciudad, d.comuna, d.calle, d.numero
+        FROM Direccion_Persona dp
+        JOIN Direccion d ON dp.direccion_id = d.id
+        WHERE dp.persona_rut = p.rut
+        LIMIT 1
+    ) addr ON true
+    WHERE
+        p_rut IS NULL
+        OR p.rut = p_rut;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_emprendimientos()
+RETURNS TABLE (
+    id INT,
+    nombre VARCHAR,
+    descripcion TEXT,
+    categoria VARCHAR,
+    estado VARCHAR,
+    duenno VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        e.id::INT,
+        e.nombre::VARCHAR,
+        e.descripcion::TEXT,
+        c.nombre::VARCHAR,
+        CASE 
+            WHEN e.activo THEN 'Activo'::VARCHAR 
+            ELSE 'Inactivo'::VARCHAR 
+        END,
+        (p.nombre || ' ' || p.apellido)::VARCHAR
+    FROM Emprendimiento e
+    JOIN Categoria c ON e.categoria_id = c.id
+    JOIN Personas p ON e.duenno_rut = p.rut;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tg_cambios()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_id_registro TEXT;
+BEGIN
+    -- Obtener ID del registro
+    IF TG_OP = 'DELETE' THEN
+        v_id_registro := OLD.id::TEXT;
+    ELSE
+        v_id_registro := NEW.id::TEXT;
+    END IF;
+    
+    -- Insertar registro de cambio
+    INSERT INTO Registro_de_Cambios (
+        tabla_afectada,
+        operacion,
+        id_registro,
+        descripcion
+    ) VALUES (
+        TG_TABLE_NAME,
+        TG_OP,
+        v_id_registro,
+        TG_OP || ' en tabla ' || TG_TABLE_NAME || ' - Registro ID: ' || v_id_registro
+    );
+    
+    -- Retornar el registro apropiado
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    ELSE
+        RETURN NEW;
+    END IF;
+    
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_personas_cambios
+AFTER INSERT OR UPDATE OR DELETE ON Personas
+FOR EACH ROW EXECUTE FUNCTION tg_cambios();
+
+-- Crear trigger para Emprendimiento
+CREATE TRIGGER trg_emprendimientos_cambios
+AFTER INSERT OR UPDATE OR DELETE ON Emprendimiento
+FOR EACH ROW EXECUTE FUNCTION tg_cambios();
+
+-- Crear trigger para Empresa
+CREATE TRIGGER trg_empresas_cambios
+AFTER INSERT OR UPDATE OR DELETE ON Empresa
+FOR EACH ROW EXECUTE FUNCTION tg_cambios();
+
+CREATE OR REPLACE FUNCTION fn_obtener_registros_cambios(
+    p_tabla VARCHAR DEFAULT NULL,
+    p_desde DATE DEFAULT NULL,
+    p_hasta DATE DEFAULT NULL,
+    p_limit INT DEFAULT 100
+)
+RETURNS TABLE (
+    id INTEGER,
+    tabla_afectada VARCHAR,
+    operacion VARCHAR,
+    id_registro VARCHAR,
+    usuario VARCHAR,
+    fecha_cambio TIMESTAMP,
+    descripcion TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        rc.id,
+        rc.tabla_afectada,
+        rc.operacion,
+        rc.id_registro,
+        rc.usuario,
+        rc.fecha_cambio,
+        rc.descripcion
+    FROM Registro_de_Cambios rc
+    WHERE 
+        (p_tabla IS NULL OR rc.tabla_afectada = p_tabla)
+        AND (p_desde IS NULL OR DATE(rc.fecha_cambio) >= p_desde)
+        AND (p_hasta IS NULL OR DATE(rc.fecha_cambio) <= p_hasta)
+    ORDER BY rc.fecha_cambio DESC
+    LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_usuarios()
+RETURNS TABLE (
+    id INT,
+    username VARCHAR,
+    created_at DATE,
+    rol VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.id,
+        u.username,
+        DATE(u.created_at),
+        u.rol
+    FROM Usuarios u;
+END;
+$$ LANGUAGE plpgsql;
