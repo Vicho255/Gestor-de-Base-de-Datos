@@ -17,18 +17,9 @@ class Database {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
-        private function __construct() {
-            try {
-                $dsn = "pgsql:host=$this->host;port=$this->port;dbname=$this->db_name";
-                $this->conn = new PDO($dsn, $this->username, $this->password, [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false
-                ]);
-            } catch(PDOException $exception) {
-                // Mostrar el error real en pantalla (solo para depuración)
-                die("Error de conexión PDO: " . $exception->getMessage());
-            }
+        } catch(PDOException $exception) {
+            // Mostrar el error real en pantalla (solo para depuración)
+            die("Error de conexión PDO: " . $exception->getMessage());
         }
     }
 
@@ -62,6 +53,5 @@ function testConnection() {
         return "Error: " . $e->getMessage();
     }
 }
-
 ?>
 
