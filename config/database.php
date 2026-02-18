@@ -17,9 +17,18 @@ class Database {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
-        } catch(PDOException $exception) {
-            error_log("Error PostgreSQL: " . $exception->getMessage());
-            throw new Exception("Error de conexión a la base de datos, Coneccion");
+        private function __construct() {
+            try {
+                $dsn = "pgsql:host=$this->host;port=$this->port;dbname=$this->db_name";
+                $this->conn = new PDO($dsn, $this->username, $this->password, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false
+                ]);
+            } catch(PDOException $exception) {
+                // Mostrar el error real en pantalla (solo para depuración)
+                die("Error de conexión PDO: " . $exception->getMessage());
+            }
         }
     }
 
@@ -55,3 +64,4 @@ function testConnection() {
 }
 
 ?>
+
