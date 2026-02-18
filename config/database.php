@@ -3,9 +3,9 @@ class Database {
     private static $instance = null;
     private $host = "localhost";
     private $port = "5432";
-    private $db_name = "emprendedores";
-    private $username = "app_user";
-    private $password = "12345";
+    private $db_name = "postgres";
+    private $username = "postgres";
+    private $password = "123456789";
     private $conn;
 
     // Constructor privado para singleton
@@ -53,4 +53,5 @@ function testConnection() {
         return "Error: " . $e->getMessage();
     }
 }
+
 ?>
