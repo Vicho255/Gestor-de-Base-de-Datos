@@ -1,0 +1,7 @@
+# Desactivar listado de directorios
+Options -Indexes
+
+# Forzar index como entrada
+DirectoryIndex login.php
+
+.htaccess
